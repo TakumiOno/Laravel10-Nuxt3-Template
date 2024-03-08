@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - '80:80'
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+  backend:
+    build: ./docker/php
+    container_name: backend
+    ports:
+      - '8000:9000'
+    volumes:
+      - ./src/backend:/src
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - app-network
+
+  frontend:
+    build: ./docker/nuxt
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      CHOKIDAR_USEPOLLING: 'true'
+    volumes:
+      - ./src/frontend:/usr/src/app
+    command: sh -c 'npm install && npm run dev'
+    ports:
+      - '3000:3000'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
